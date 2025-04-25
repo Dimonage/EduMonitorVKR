@@ -84,3 +84,29 @@ def select_features(X, y, k=20):
     except Exception as e:
         st.error(f"Ошибка при отборе признаков: {e}")
         return X, X.columns.tolist()
+    
+# 4. Разделение данных для регрессии
+def split_data(df, target_col, test_size=0.2, random_state=42, log_transform=False):
+    X = df.drop(columns=[target_col])
+    y = df[target_col]
+    
+    if log_transform:
+        y = np.log1p(y)
+        st.write("Применено логарифмирование к целевой переменной")
+    
+    X, selected_features = select_features(X, y, k=20)
+    
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=test_size, random_state=random_state
+    )
+    
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+    
+    X_train_scaled = np.nan_to_num(X_train_scaled, nan=0.0, posinf=1e6, neginf=-1e6)
+    X_test_scaled = np.nan_to_num(X_test_scaled, nan=0.0, posinf=1e6, neginf=-1e6)
+    
+    st.write(f"Данные разделены. Размер тренировочной выборки: {X_train.shape}")
+    st.write(f"Размер тестовой выборки: {X_test.shape}")
+    return X_train_scaled, X_test_scaled, y_train, y_test, scaler, selected_features
