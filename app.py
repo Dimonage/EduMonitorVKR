@@ -39,7 +39,7 @@ def initialize_session_state():
     for key, value in session_keys.items():
         if key not in st.session_state:
             st.session_state[key] = value
-            
+
  # 1. Загрузка данных
 def load_data():
     uploaded_file = st.file_uploader("Загрузите датасет (.xlsx)", type=["xlsx"], key="file_uploader")
@@ -72,3 +72,15 @@ def preprocess_data(df, target_col=None):
     df_clean = df_clean.replace([np.inf, -np.inf], np.nan).dropna()
     st.write(f"Данные обработаны. Размер после очистки: {df_clean.shape}")
     return df_clean
+
+# 3. Отбор признаков
+def select_features(X, y, k=20):
+    try:
+        selector = SelectKBest(score_func=f_regression, k=k)
+        selector.fit(X, y)
+        selected_features = X.columns[selector.get_support()].tolist()
+        st.write(f"Отобрано {k} признаков: {selected_features}")
+        return X[selected_features], selected_features
+    except Exception as e:
+        st.error(f"Ошибка при отборе признаков: {e}")
+        return X, X.columns.tolist()
