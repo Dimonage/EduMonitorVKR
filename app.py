@@ -39,3 +39,36 @@ def initialize_session_state():
     for key, value in session_keys.items():
         if key not in st.session_state:
             st.session_state[key] = value
+            
+ # 1. Загрузка данных
+def load_data():
+    uploaded_file = st.file_uploader("Загрузите датасет (.xlsx)", type=["xlsx"], key="file_uploader")
+    if uploaded_file:
+        try:
+            df = pd.read_excel(uploaded_file)
+            st.success(f"Датасет загружен! Размер: {df.shape}")
+            return df
+        except Exception as e:
+            st.error(f"Ошибка при загрузке данных: {e}")
+            return None
+    return None
+
+# 2. Предобработка данных
+def preprocess_data(df, target_col=None):
+    df_clean = df.copy()
+    numeric_cols = df_clean.select_dtypes(include=[np.number]).columns
+    df_clean = df_clean[numeric_cols]
+    df_clean = df_clean.fillna(df_clean.mean())
+    df_clean = df_clean.loc[:, df_clean.var() > 0]
+    
+    if target_col and target_col in df_clean.columns:
+        if target_col == 'Общий объем научно-исследовательских и опытно-конструкторских работ (далее – НИОКР)':
+            df_clean[target_col] = df_clean[target_col].clip(lower=1e-6)
+        outliers = detect_outliers(df_clean, target_col)
+        if outliers is not None:
+            df_clean = df_clean[~outliers]
+        df_clean = df_clean.dropna(subset=[target_col])
+    
+    df_clean = df_clean.replace([np.inf, -np.inf], np.nan).dropna()
+    st.write(f"Данные обработаны. Размер после очистки: {df_clean.shape}")
+    return df_clean
