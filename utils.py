@@ -133,7 +133,7 @@ def plot_feature_importance(model, feature_names, save_path=None):
         plt.close(fig)
     except Exception as e:
         st.error(f"Ошибка при построении графика важности: {e}")
-        
+
 def save_dataframe(df, filename="data.csv"):
     """
     Сохранение датасета в файл
@@ -172,4 +172,37 @@ def load_dataframe(filename="data.csv"):
         return df
     except Exception as e:
         st.error(f"Ошибка при загрузке датасета: {e}")
+        return None
+    
+def detect_outliers(df, column, iqr_factor=1.5):
+    """
+    Обнаружение выбросов с помощью метода межквартильного размаха
+    
+    Параметры:
+    df (pandas.DataFrame): Входной датасет
+    column (str): Столбец для анализа
+    iqr_factor (float): Множитель для IQR (по умолчанию 1.5)
+    
+    Возвращает:
+    pandas.Series: Булева маска, где True — выбросы
+    """
+    try:
+        if column not in df.columns:
+            st.error(f"Столбец '{column}' отсутствует")
+            return None
+        if not np.issubdtype(df[column].dtype, np.number):
+            st.error("Столбец должен быть числовым")
+            return None
+        
+        q1 = df[column].quantile(0.25)
+        q3 = df[column].quantile(0.75)
+        iqr = q3 - q1
+        lower_bound = q1 - iqr_factor * iqr
+        upper_bound = q3 + iqr_factor * iqr
+        outliers = (df[column] < lower_bound) | (df[column] > upper_bound)
+        
+        st.write(f"Обнаружено {outliers.sum()} выбросов в столбце '{column}'")
+        return outliers
+    except Exception as e:
+        st.error(f"Ошибка при обнаружении выбросов: {e}")
         return None
