@@ -110,3 +110,22 @@ def split_data(df, target_col, test_size=0.2, random_state=42, log_transform=Fal
     st.write(f"Данные разделены. Размер тренировочной выборки: {X_train.shape}")
     st.write(f"Размер тестовой выборки: {X_test.shape}")
     return X_train_scaled, X_test_scaled, y_train, y_test, scaler, selected_features
+
+# 5. Обучение модели регрессии
+def train_regression_model(X_train, y_train, model_type="rf"):
+    if model_type == "rf":
+        model = RandomForestRegressor(random_state=42)
+        param_grid = {
+            'n_estimators': [100, 200],
+            'max_depth': [10, 20, None],
+            'min_samples_split': [2, 5]
+        }
+        grid_search = GridSearchCV(model, param_grid, cv=3, scoring='neg_mean_squared_error', n_jobs=-1)
+        grid_search.fit(X_train, y_train)
+        model = grid_search.best_estimator_
+        st.write("Лучшие гиперпараметры:", grid_search.best_params_)
+    else:
+        raise ValueError("Неизвестный тип модели")
+    
+    st.write("Модель регрессии обучена.")
+    return model
