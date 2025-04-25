@@ -133,3 +133,43 @@ def plot_feature_importance(model, feature_names, save_path=None):
         plt.close(fig)
     except Exception as e:
         st.error(f"Ошибка при построении графика важности: {e}")
+        
+def save_dataframe(df, filename="data.csv"):
+    """
+    Сохранение датасета в файл
+    
+    Параметры:
+    df (pandas.DataFrame): Датасет для сохранения
+    filename (str): Имя файла
+    
+    Возвращает:
+    bool: True, если сохранение успешно
+    """
+    try:
+        df.to_csv(filename, index=False)
+        st.write(f"Датасет сохранён как {filename}")
+        return True
+    except Exception as e:
+        st.error(f"Ошибка при сохранении датасета: {e}")
+        return False
+
+def load_dataframe(filename="data.csv"):
+    """
+    Загрузка датасета из файла
+    
+    Параметры:
+    filename (str): Имя файла
+    
+    Возвращает:
+    pandas.DataFrame или None: Загруженный датасет или None при ошибке
+    """
+    try:
+        if not os.path.exists(filename):
+            st.error(f"Файл {filename} не найден")
+            return None
+        df = pd.read_csv(filename)
+        st.write(f"Датасет загружен из {filename}")
+        return df
+    except Exception as e:
+        st.error(f"Ошибка при загрузке датасета: {e}")
+        return None
