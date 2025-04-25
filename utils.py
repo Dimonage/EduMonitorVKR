@@ -206,3 +206,34 @@ def detect_outliers(df, column, iqr_factor=1.5):
     except Exception as e:
         st.error(f"Ошибка при обнаружении выбросов: {e}")
         return None
+    
+def summarize_features(df, max_features=10):
+    """
+    Краткий анализ признаков: среднее, дисперсия, уникальные значения
+    
+    Параметры:
+    df (pandas.DataFrame): Входной датасет
+    max_features (int): Максимальное количество признаков для анализа
+    
+    Возвращает:
+    pandas.DataFrame: Таблица с характеристиками признаков
+    """
+    try:
+        summary = []
+        for col in df.columns[:max_features]:
+            mean_val = df[col].mean() if np.issubdtype(df[col].dtype, np.number) else None
+            var_val = df[col].var() if np.issubdtype(df[col].dtype, np.number) else None
+            unique_count = df[col].nunique()
+            summary.append({
+                'Признак': col,
+                'Среднее': round(mean_val, 2) if mean_val is not None else '-',
+                'Дисперсия': round(var_val, 2) if var_val is not None else '-',
+                'Уникальных значений': unique_count
+            })
+        summary_df = pd.DataFrame(summary)
+        st.write("Характеристики признаков:")
+        st.dataframe(summary_df)
+        return summary_df
+    except Exception as e:
+        st.error(f"Ошибка при анализе признаков: {e}")
+        return None
