@@ -129,3 +129,37 @@ def train_regression_model(X_train, y_train, model_type="rf"):
     
     st.write("Модель регрессии обучена.")
     return model
+
+# 6. Оценка модели регрессии
+def evaluate_regression_model(model, X_test, y_test, target_name, feature_names, log_transform=False):
+    try:
+        y_pred = model.predict(X_test)
+        
+        if log_transform:
+            y_pred = np.expm1(y_pred)
+            y_test = np.expm1(y_test)
+        
+        y_pred = np.clip(y_pred, 0, 1e10)
+        y_test = np.clip(y_test, 0, 1e10)
+        
+        rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+        mae = mean_absolute_error(y_test, y_pred)
+        
+        st.write(f"RMSE для {target_name}: {rmse:.2f}")
+        st.write(f"MAE для {target_name}: {mae:.2f}")
+        
+        fig, ax = plt.subplots()
+        ax.scatter(y_test, y_pred, alpha=0.5)
+        ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--')
+        ax.set_xlabel("Фактические значения")
+        ax.set_ylabel("Предсказанные значения")
+        ax.set_title(f"Сравнение фактических и предсказанных значений ({target_name})")
+        st.pyplot(fig)
+        plt.close(fig)
+        
+        plot_feature_importance(model, feature_names, save_path=f"{target_name.lower().replace(' ', '_')}_importance.png")
+        
+        return rmse, mae
+    except Exception as e:
+        st.error(f"Ошибка при оценке модели: {e}")
+        return None, None
