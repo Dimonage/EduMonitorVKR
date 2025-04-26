@@ -163,3 +163,19 @@ def evaluate_regression_model(model, X_test, y_test, target_name, feature_names,
     except Exception as e:
         st.error(f"Ошибка при оценке модели: {e}")
         return None, None
+    
+# 7. Кластеризация вузов
+def cluster_vuz(df, n_clusters=3):
+    try:
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(df)
+        X_scaled = np.nan_to_num(X_scaled, nan=0.0, posinf=1e6, neginf=-1e6)
+        
+        kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+        clusters = kmeans.fit_predict(X_scaled)
+        
+        st.write(f"Кластеризация выполнена. Количество кластеров: {n_clusters}")
+        return clusters, kmeans, scaler
+    except Exception as e:
+        st.error(f"Ошибка при кластеризации: {e}")
+        return None, None, None
