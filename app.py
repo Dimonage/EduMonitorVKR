@@ -179,3 +179,30 @@ def cluster_vuz(df, n_clusters=3):
     except Exception as e:
         st.error(f"Ошибка при кластеризации: {e}")
         return None, None, None
+    
+# 8. Визуализация кластеров: Диаграмма рассеяния
+def plot_cluster_scatter(df, clusters, feature_x, feature_y):
+    try:
+        if clusters is None:
+            st.error("Кластеризация не выполнена")
+            return
+        if feature_x not in df.columns or feature_y not in df.columns:
+            st.error(f"Признаки '{feature_x}' или '{feature_y}' отсутствуют")
+            return
+        if df[feature_x].isna().any() or df[feature_y].isna().any():
+            st.error("Выбранные признаки содержат NaN")
+            return
+        if not np.issubdtype(df[feature_x].dtype, np.number) or not np.issubdtype(df[feature_y].dtype, np.number):
+            st.error("Выбранные признаки должны быть числовыми")
+            return
+        
+        fig, ax = plt.subplots()
+        sns.scatterplot(data=df, x=feature_x, y=feature_y, hue=clusters, palette="deep", s=100, ax=ax)
+        ax.set_title(f"Кластеризация вузов: {feature_x} vs {feature_y}")
+        ax.set_xlabel(feature_x)
+        ax.set_ylabel(feature_y)
+        ax.legend(title="Кластер")
+        st.pyplot(fig)
+        plt.close(fig)
+    except Exception as e:
+        st.error(f"Ошибка при построении диаграммы рассеяния: {e}")
