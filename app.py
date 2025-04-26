@@ -280,3 +280,25 @@ def load_model(filename="model.pkl"):
     except Exception as e:
         st.error(f"Ошибка при загрузке модели: {e}")
         return None
+    
+# Основной интерфейс
+def main():
+    initialize_session_state()
+    
+    st.subheader("Загрузка данных")
+    if not st.session_state.data_loaded:
+        df = load_data()
+        if df is not None:
+            st.session_state.df_clean = preprocess_data(df)
+            if st.session_state.df_clean is not None and not st.session_state.df_clean.empty:
+                save_dataframe(st.session_state.df_clean, "processed_data.csv")
+                st.session_state.data_loaded = True
+                st.experimental_rerun()
+            else:
+                st.error("Ошибка: обработанный датасет пуст или некорректен")
+    else:
+        st.success(f"Датасет уже загружен! Размер: {st.session_state.df_clean.shape}")
+    
+    if st.session_state.df_clean is None or not st.session_state.data_loaded:
+        st.warning("Пожалуйста, загрузите данные для продолжения.")
+        return
