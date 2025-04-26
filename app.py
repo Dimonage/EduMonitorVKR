@@ -262,3 +262,11 @@ def plot_correlation_heatmap(df):
         plt.close(fig)
     except Exception as e:
         st.error(f"Ошибка при построении тепловой карты: {e}")
+
+# 12. Сохранение модели
+def save_model(model, filename="model.pkl"):
+    try:
+        joblib.dump(model, filename)
+        st.write(f"Модель сохранена как {filename}")
+    except Exception as e:
+        st.error(f"Ошибка при сохранении модели: {e}")
