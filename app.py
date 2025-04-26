@@ -206,3 +206,19 @@ def plot_cluster_scatter(df, clusters, feature_x, feature_y):
         plt.close(fig)
     except Exception as e:
         st.error(f"Ошибка при построении диаграммы рассеяния: {e}")
+
+# 9. Визуализация кластеров: Гистограмма распределения
+def plot_cluster_distribution(clusters):
+    try:
+        if clusters is None:
+            st.error("Кластеризация не выполнена")
+            return
+        fig, ax = plt.subplots()
+        sns.countplot(x=clusters, palette="deep", ax=ax)
+        ax.set_title("Распределение вузов по кластерам")
+        ax.set_xlabel("Кластер")
+        ax.set_ylabel("Количество вузов")
+        st.pyplot(fig)
+        plt.close(fig)
+    except Exception as e:
+        st.error(f"Ошибка при построении гистограммы: {e}")
