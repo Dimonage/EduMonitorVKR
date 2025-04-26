@@ -222,3 +222,31 @@ def plot_cluster_distribution(clusters):
         plt.close(fig)
     except Exception as e:
         st.error(f"Ошибка при построении гистограммы: {e}")
+
+# 10. Визуализация кластеров: Box Plot
+def plot_cluster_boxplot(df, clusters, feature):
+    try:
+        if clusters is None:
+            st.error("Кластеризация не выполнена")
+            return
+        if feature not in df.columns:
+            st.error(f"Признак '{feature}' отсутствует")
+            return
+        if df[feature].isna().any():
+            st.error("Признак содержит NaN")
+            return
+        if not np.issubdtype(df[feature].dtype, np.number):
+            st.error("Признак должен быть числовым")
+            return
+        
+        df_plot = df.copy()
+        df_plot['Кластер'] = clusters
+        fig, ax = plt.subplots()
+        sns.boxplot(x='Кластер', y=feature, data=df_plot, palette="deep", ax=ax)
+        ax.set_title(f"Распределение признака '{feature}' по кластерам")
+        ax.set_xlabel("Кластер")
+        ax.set_ylabel(feature)
+        st.pyplot(fig)
+        plt.close(fig)
+    except Exception as e:
+        st.error(f"Ошибка при построении box plot: {e}")
