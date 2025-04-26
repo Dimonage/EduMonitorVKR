@@ -270,3 +270,13 @@ def save_model(model, filename="model.pkl"):
         st.write(f"Модель сохранена как {filename}")
     except Exception as e:
         st.error(f"Ошибка при сохранении модели: {e}")
+
+# 13. Загрузка модели
+def load_model(filename="model.pkl"):
+    try:
+        model = joblib.load(filename)
+        st.write(f"Модель загружена из {filename}")
+        return model
+    except Exception as e:
+        st.error(f"Ошибка при загрузке модели: {e}")
+        return None
