@@ -250,3 +250,15 @@ def plot_cluster_boxplot(df, clusters, feature):
         plt.close(fig)
     except Exception as e:
         st.error(f"Ошибка при построении box plot: {e}")
+
+# 11. Построение тепловой карты корреляций
+def plot_correlation_heatmap(df):
+    try:
+        fig, ax = plt.subplots(figsize=(12, 10))
+        corr = df.corr()
+        sns.heatmap(corr, annot=False, cmap="coolwarm", center=0, ax=ax)
+        ax.set_title("Тепловая карта корреляций")
+        st.pyplot(fig)
+        plt.close(fig)
+    except Exception as e:
+        st.error(f"Ошибка при построении тепловой карты: {e}")
