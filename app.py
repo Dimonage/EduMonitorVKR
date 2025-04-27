@@ -341,3 +341,23 @@ def main():
         else:
             st.error("Целевая переменная для ЕГЭ отсутствует!")
     
+    elif task == "Предсказание НИОКР":
+        st.subheader("Предсказание объема НИОКР")
+        target_col = 'Общий объем научно-исследовательских и опытно-конструкторских работ (далее – НИОКР)'
+        if target_col in st.session_state.df_clean.columns:
+            if st.button("Обучить модель НИОКР"):
+                df_niokr = preprocess_data(st.session_state.df_clean, target_col)
+                X_train, X_test, y_train, y_test, scaler, feature_cols = split_data(
+                    df_niokr, target_col, log_transform=True
+                )
+                st.session_state.model_niokr = train_regression_model(X_train, y_train)
+                st.session_state.feature_names_niokr = feature_cols
+                rmse, mae = evaluate_regression_model(
+                    st.session_state.model_niokr, X_test, y_test, "Объем НИОКР",
+                    st.session_state.feature_names_niokr, log_transform=True
+                )
+                if st.session_state.model_niokr:
+                    save_model(st.session_state.model_niokr, "model_niokr.pkl")
+        else:
+            st.error("Целевая переменная для НИОКР отсутствует!")
+    
