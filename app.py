@@ -400,3 +400,21 @@ def main():
         if st.button("Показать тепловую карту"):
             plot_correlation_heatmap(st.session_state.df_clean)
     
+    st.subheader("Управление моделями")
+    if st.button("Сохранить все модели"):
+        if st.session_state.model_ege:
+            save_model(st.session_state.model_ege, "model_ege.pkl")
+        if st.session_state.model_niokr:
+            save_model(st.session_state.model_niokr, "model_niokr.pkl")
+        if st.session_state.kmeans:
+            save_model(st.session_state.kmeans, "model_kmeans.pkl")
+        if not st.session_state.model_ege and not st.session_state.model_niokr and not st.session_state.kmeans:
+            st.warning("Нет моделей для сохранения!")
+    
+    if st.button("Загрузить модели"):
+        st.session_state.model_ege = load_model("model_ege.pkl")
+        st.session_state.model_niokr = load_model("model_niokr.pkl")
+        st.session_state.kmeans = load_model("model_kmeans.pkl")
+
+if __name__ == "__main__":
+    main()
