@@ -302,3 +302,23 @@ def main():
     if st.session_state.df_clean is None or not st.session_state.data_loaded:
         st.warning("Пожалуйста, загрузите данные для продолжения.")
         return
+    
+    st.subheader("Выберите задачу")
+    task = st.selectbox("Задача", ["Анализ данных", "Предсказание ЕГЭ", "Предсказание НИОКР", "Кластеризация", "Тепловая карта"], key="task")
+    
+    if task == "Анализ данных":
+        st.subheader("Анализ данных")
+        if st.button("Проверить качество данных"):
+            check_data_quality(st.session_state.df_clean)
+        
+        numeric_cols = [
+            col for col in st.session_state.df_clean.select_dtypes(include=[np.number]).columns
+            if st.session_state.df_clean[col].var() > 0 and not st.session_state.df_clean[col].isna().all()
+        ]
+        feature = st.selectbox("Выберите признак для анализа распределения", numeric_cols, key="dist_feature")
+        if st.button("Показать распределение признака"):
+            plot_feature_distribution(st.session_state.df_clean, feature, save_path=f"{feature.replace(' ', '_')}_dist.png")
+        
+        if st.button("Суммаризировать признаки"):
+            summarize_features(st.session_state.df_clean)
+    
