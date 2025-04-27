@@ -2,7 +2,7 @@
 """
 Модуль utils.py
 Описание: Вспомогательные функции для анализа данных в системе мониторинга вузов.
-Содержит функции для проверки качества данных, визуализации признаков и анализа важности признаков.
+Содержит функции для проверки качества данных, визуализации признаков, анализа важности признаков и экспорта в Word.
 Используется в приложении Streamlit для расширения функциональности.
 """
 
@@ -12,10 +12,32 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import streamlit as st
 import os
+from docx import Document
+from docx.shared import Inches
 
 # Настройка стиля графиков
 sns.set(style="whitegrid")
 plt.rcParams["figure.figsize"] = (10, 6)
+
+# Создание директории для графиков
+os.makedirs("plots", exist_ok=True)
+
+# Список для хранения путей к сохранённым графикам
+saved_plots = []
+
+def clear_saved_plots():
+    """
+    Очистка списка сохранённых графиков и удаление файлов из директории plots
+    """
+    try:
+        for file in os.listdir("plots"):
+            os.remove(os.path.join("plots", file))
+        saved_plots.clear()
+        st.write("Сохранённые графики очищены")
+        return True
+    except Exception as e:
+        st.error(f"Ошибка при очистке графиков: {e}")
+        return False
 
 def check_data_quality(df):
     """
@@ -69,18 +91,18 @@ def plot_feature_distribution(df, feature, save_path=None):
     save_path (str, optional): Путь для сохранения графика
     
     Возвращает:
-    None: Отображает график в Streamlit
+    str: Путь к сохранённому графику или None при ошибке
     """
     try:
         if feature not in df.columns:
             st.error(f"Признак '{feature}' отсутствует в данных")
-            return
+            return None
         if not np.issubdtype(df[feature].dtype, np.number):
             st.error("Признак должен быть числовым")
-            return
+            return None
         if df[feature].isna().all():
             st.error("Признак содержит только пропуски")
-            return
+            return None
         
         st.subheader(f"Распределение признака '{feature}'")
         fig, ax = plt.subplots()
@@ -90,13 +112,19 @@ def plot_feature_distribution(df, feature, save_path=None):
         ax.set_ylabel("Частота")
         st.pyplot(fig)
         
-        if save_path:
-            fig.savefig(save_path)
-            st.write(f"График сохранён как {save_path}")
+        # Автоматическое сохранение графика
+        if save_path is None:
+            save_path = f"plots/feature_distribution_{feature.replace(' ', '_')}_{len(saved_plots)}.png"
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        fig.savefig(save_path, bbox_inches='tight')
+        saved_plots.append(save_path)
+        st.write(f"График сохранён как {save_path}")
         
         plt.close(fig)
+        return save_path
     except Exception as e:
         st.error(f"Ошибка при построении гистограммы: {e}")
+        return None
 
 def plot_feature_importance(model, feature_names, save_path=None):
     """
@@ -108,15 +136,15 @@ def plot_feature_importance(model, feature_names, save_path=None):
     save_path (str, optional): Путь для сохранения графика
     
     Возвращает:
-    None: Отображает график в Streamlit
+    str: Путь к сохранённому графику или None при ошибке
     """
     try:
         if not hasattr(model, 'feature_importances_'):
             st.error("Модель не поддерживает анализ важности признаков")
-            return
+            return None
         if len(feature_names) != len(model.feature_importances_):
             st.error("Количество признаков не соответствует модели")
-            return
+            return None
         
         st.subheader("Важность признаков модели")
         fig, ax = plt.subplots(figsize=(10, 8))
@@ -126,13 +154,19 @@ def plot_feature_importance(model, feature_names, save_path=None):
         ax.set_ylabel("Признак")
         st.pyplot(fig)
         
-        if save_path:
-            fig.savefig(save_path)
-            st.write(f"График сохранён как {save_path}")
+        # Автоматическое сохранение графика
+        if save_path is None:
+            save_path = f"plots/feature_importance_{len(saved_plots)}.png"
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        fig.savefig(save_path, bbox_inches='tight')
+        saved_plots.append(save_path)
+        st.write(f"График сохранён как {save_path}")
         
         plt.close(fig)
+        return save_path
     except Exception as e:
         st.error(f"Ошибка при построении графика важности: {e}")
+        return None
 
 def save_dataframe(df, filename="data.csv"):
     """
@@ -173,7 +207,7 @@ def load_dataframe(filename="data.csv"):
     except Exception as e:
         st.error(f"Ошибка при загрузке датасета: {e}")
         return None
-    
+
 def detect_outliers(df, column, iqr_factor=1.5):
     """
     Обнаружение выбросов с помощью метода межквартильного размаха
@@ -206,7 +240,7 @@ def detect_outliers(df, column, iqr_factor=1.5):
     except Exception as e:
         st.error(f"Ошибка при обнаружении выбросов: {e}")
         return None
-    
+
 def summarize_features(df, max_features=10):
     """
     Краткий анализ признаков: среднее, дисперсия, уникальные значения
@@ -237,3 +271,47 @@ def summarize_features(df, max_features=10):
     except Exception as e:
         st.error(f"Ошибка при анализе признаков: {e}")
         return None
+
+def export_to_word(output_file="edu_monitor_report.docx", standard_text=None):
+    """
+    Экспорт результатов анализа в документ Word с текстом и графиками
+    
+    Параметры:
+    output_file (str): Имя выходного файла Word
+    standard_text (str): Стандартизированный текст для включения в документ
+    
+    Возвращает:
+    bool: True, если экспорт успешен
+    """
+    try:
+        doc = Document()
+        
+        # Добавление заголовка
+        doc.add_heading("Отчёт по анализу данных мониторинга вузов", 0)
+        
+        # Добавление стандартизированного текста
+        if standard_text:
+            doc.add_paragraph(standard_text)
+        else:
+            doc.add_paragraph(
+                "Данный отчёт содержит результаты интеллектуального анализа данных мониторинга вузов, "
+                "включая анализ качества данных, распределение признаков, важность признаков, "
+                "результаты кластеризации и корреляционный анализ. Графики ниже иллюстрируют основные выводы."
+            )
+        
+        # Добавление графиков
+        doc.add_heading("Визуализации", level=1)
+        for plot_path in saved_plots:
+            if os.path.exists(plot_path):
+                doc.add_paragraph(f"График: {os.path.basename(plot_path)}")
+                doc.add_picture(plot_path, width=Inches(6))
+            else:
+                st.warning(f"Файл {plot_path} не найден и не включён в отчёт")
+        
+        # Сохранение документа
+        doc.save(output_file)
+        st.write(f"Отчёт сохранён как {output_file}")
+        return True
+    except Exception as e:
+        st.error(f"Ошибка при создании документа Word: {e}")
+        return False

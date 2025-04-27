@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -11,11 +13,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import SelectKBest, f_regression
 import joblib
 import os
-
-from utils import (
-    check_data_quality, plot_feature_distribution, plot_feature_importance,
-    save_dataframe, load_dataframe, detect_outliers, summarize_features
-)
+import utils
 
 # Настройка стиля визуализации
 sns.set(style="whitegrid")
@@ -40,7 +38,7 @@ def initialize_session_state():
         if key not in st.session_state:
             st.session_state[key] = value
 
- # 1. Загрузка данных
+# 1. Загрузка данных
 def load_data():
     uploaded_file = st.file_uploader("Загрузите датасет (.xlsx)", type=["xlsx"], key="file_uploader")
     if uploaded_file:
@@ -64,7 +62,7 @@ def preprocess_data(df, target_col=None):
     if target_col and target_col in df_clean.columns:
         if target_col == 'Общий объем научно-исследовательских и опытно-конструкторских работ (далее – НИОКР)':
             df_clean[target_col] = df_clean[target_col].clip(lower=1e-6)
-        outliers = detect_outliers(df_clean, target_col)
+        outliers = utils.detect_outliers(df_clean, target_col)
         if outliers is not None:
             df_clean = df_clean[~outliers]
         df_clean = df_clean.dropna(subset=[target_col])
@@ -84,7 +82,7 @@ def select_features(X, y, k=20):
     except Exception as e:
         st.error(f"Ошибка при отборе признаков: {e}")
         return X, X.columns.tolist()
-    
+
 # 4. Разделение данных для регрессии
 def split_data(df, target_col, test_size=0.2, random_state=42, log_transform=False):
     X = df.drop(columns=[target_col])
@@ -148,6 +146,7 @@ def evaluate_regression_model(model, X_test, y_test, target_name, feature_names,
         st.write(f"RMSE для {target_name}: {rmse:.2f}")
         st.write(f"MAE для {target_name}: {mae:.2f}")
         
+        # График рассеяния
         fig, ax = plt.subplots()
         ax.scatter(y_test, y_pred, alpha=0.5)
         ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--')
@@ -155,15 +154,24 @@ def evaluate_regression_model(model, X_test, y_test, target_name, feature_names,
         ax.set_ylabel("Предсказанные значения")
         ax.set_title(f"Сравнение фактических и предсказанных значений ({target_name})")
         st.pyplot(fig)
+        
+        # Сохранение графика
+        save_path = f"plots/regression_scatter_{target_name.replace(' ', '_')}_{len(utils.saved_plots)}.png"
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        fig.savefig(save_path, bbox_inches='tight')
+        utils.saved_plots.append(save_path)
+        st.write(f"График сохранён как {save_path}")
+        
         plt.close(fig)
         
-        plot_feature_importance(model, feature_names, save_path=f"{target_name.lower().replace(' ', '_')}_importance.png")
+        # График важности признаков
+        utils.plot_feature_importance(model, feature_names)
         
         return rmse, mae
     except Exception as e:
         st.error(f"Ошибка при оценке модели: {e}")
         return None, None
-    
+
 # 7. Кластеризация вузов
 def cluster_vuz(df, n_clusters=3):
     try:
@@ -179,7 +187,7 @@ def cluster_vuz(df, n_clusters=3):
     except Exception as e:
         st.error(f"Ошибка при кластеризации: {e}")
         return None, None, None
-    
+
 # 8. Визуализация кластеров: Диаграмма рассеяния
 def plot_cluster_scatter(df, clusters, feature_x, feature_y):
     try:
@@ -203,6 +211,14 @@ def plot_cluster_scatter(df, clusters, feature_x, feature_y):
         ax.set_ylabel(feature_y)
         ax.legend(title="Кластер")
         st.pyplot(fig)
+        
+        # Сохранение графика
+        save_path = f"plots/cluster_scatter_{feature_x.replace(' ', '_')}_vs_{feature_y.replace(' ', '_')}_{len(utils.saved_plots)}.png"
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        fig.savefig(save_path, bbox_inches='tight')
+        utils.saved_plots.append(save_path)
+        st.write(f"График сохранён как {save_path}")
+        
         plt.close(fig)
     except Exception as e:
         st.error(f"Ошибка при построении диаграммы рассеяния: {e}")
@@ -219,6 +235,14 @@ def plot_cluster_distribution(clusters):
         ax.set_xlabel("Кластер")
         ax.set_ylabel("Количество вузов")
         st.pyplot(fig)
+        
+        # Сохранение графика
+        save_path = f"plots/cluster_distribution_{len(utils.saved_plots)}.png"
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        fig.savefig(save_path, bbox_inches='tight')
+        utils.saved_plots.append(save_path)
+        st.write(f"График сохранён как {save_path}")
+        
         plt.close(fig)
     except Exception as e:
         st.error(f"Ошибка при построении гистограммы: {e}")
@@ -247,6 +271,14 @@ def plot_cluster_boxplot(df, clusters, feature):
         ax.set_xlabel("Кластер")
         ax.set_ylabel(feature)
         st.pyplot(fig)
+        
+        # Сохранение графика
+        save_path = f"plots/cluster_boxplot_{feature.replace(' ', '_')}_{len(utils.saved_plots)}.png"
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        fig.savefig(save_path, bbox_inches='tight')
+        utils.saved_plots.append(save_path)
+        st.write(f"График сохранён как {save_path}")
+        
         plt.close(fig)
     except Exception as e:
         st.error(f"Ошибка при построении box plot: {e}")
@@ -259,6 +291,14 @@ def plot_correlation_heatmap(df):
         sns.heatmap(corr, annot=False, cmap="coolwarm", center=0, ax=ax)
         ax.set_title("Тепловая карта корреляций")
         st.pyplot(fig)
+        
+        # Сохранение графика
+        save_path = f"plots/correlation_heatmap_{len(utils.saved_plots)}.png"
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        fig.savefig(save_path, bbox_inches='tight')
+        utils.saved_plots.append(save_path)
+        st.write(f"График сохранён как {save_path}")
+        
         plt.close(fig)
     except Exception as e:
         st.error(f"Ошибка при построении тепловой карты: {e}")
@@ -280,7 +320,7 @@ def load_model(filename="model.pkl"):
     except Exception as e:
         st.error(f"Ошибка при загрузке модели: {e}")
         return None
-    
+
 # Основной интерфейс
 def main():
     initialize_session_state()
@@ -291,7 +331,7 @@ def main():
         if df is not None:
             st.session_state.df_clean = preprocess_data(df)
             if st.session_state.df_clean is not None and not st.session_state.df_clean.empty:
-                save_dataframe(st.session_state.df_clean, "processed_data.csv")
+                utils.save_dataframe(st.session_state.df_clean, "processed_data.csv")
                 st.session_state.data_loaded = True
                 st.experimental_rerun()
             else:
@@ -309,7 +349,7 @@ def main():
     if task == "Анализ данных":
         st.subheader("Анализ данных")
         if st.button("Проверить качество данных"):
-            check_data_quality(st.session_state.df_clean)
+            utils.check_data_quality(st.session_state.df_clean)
         
         numeric_cols = [
             col for col in st.session_state.df_clean.select_dtypes(include=[np.number]).columns
@@ -317,10 +357,10 @@ def main():
         ]
         feature = st.selectbox("Выберите признак для анализа распределения", numeric_cols, key="dist_feature")
         if st.button("Показать распределение признака"):
-            plot_feature_distribution(st.session_state.df_clean, feature, save_path=f"{feature.replace(' ', '_')}_dist.png")
+            utils.plot_feature_distribution(st.session_state.df_clean, feature)
         
         if st.button("Суммаризировать признаки"):
-            summarize_features(st.session_state.df_clean)
+            utils.summarize_features(st.session_state.df_clean)
     
     elif task == "Предсказание ЕГЭ":
         st.subheader("Предсказание среднего балла ЕГЭ")
@@ -370,14 +410,14 @@ def main():
             if st.session_state.clusters is not None:
                 st.session_state.df_clean['Кластер'] = st.session_state.clusters
                 save_model(st.session_state.kmeans, "model_kmeans.pkl")
-                save_dataframe(st.session_state.df_clean, "clustered_data.csv")
+                utils.save_dataframe(st.session_state.df_clean, "clustered_data.csv")
         
         if st.session_state.clusters is not None:
             numeric_cols = [
                 col for col in st.session_state.df_clean.select_dtypes(include=[np.number]).columns
-                if st.session_state.df_clean[col].var() > 0 and not st.session_state.df_clean[col].isna().all()
+                if st.session_state.df_clean[col].var() > 0 and not st.session_state.df_clean[col].isna().all() and col != 'Кластер'
             ]
-
+            
             st.subheader("Диаграмма рассеяния кластеров")
             feature_x = st.selectbox("Ось X", numeric_cols, key="scatter_x")
             feature_y = st.selectbox("Ось Y", numeric_cols, key="scatter_y")
@@ -415,6 +455,33 @@ def main():
         st.session_state.model_ege = load_model("model_ege.pkl")
         st.session_state.model_niokr = load_model("model_niokr.pkl")
         st.session_state.kmeans = load_model("model_kmeans.pkl")
+    
+    st.subheader("Экспорт отчёта")
+    standard_text = st.text_area(
+        "Введите стандартизированный текст для отчёта (или оставьте пустым для текста по умолчанию)",
+        height=200,
+        key="standard_text"
+    )
+    if st.button("Экспортировать отчёт в Word"):
+        if utils.saved_plots:
+            with st.spinner("Создание отчёта..."):
+                export_success = utils.export_to_word(
+                    output_file="edu_monitor_report.docx",
+                    standard_text=standard_text if standard_text.strip() else None
+                )
+                if export_success:
+                    with open("edu_monitor_report.docx", "rb") as file:
+                        st.download_button(
+                            label="Скачать отчёт",
+                            data=file,
+                            file_name="edu_monitor_report.docx",
+                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        )
+        else:
+            st.warning("Нет графиков для экспорта! Выполните анализ данных или визуализации.")
+    
+    if st.button("Очистить сохранённые графики"):
+        utils.clear_saved_plots()
 
 if __name__ == "__main__":
     main()
