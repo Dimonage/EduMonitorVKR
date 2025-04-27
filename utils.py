@@ -24,6 +24,8 @@ os.makedirs("plots", exist_ok=True)
 
 # Список для хранения путей к сохранённым графикам
 saved_plots = []
+# Список для хранения читаемых описаний графиков
+plot_descriptions = []
 
 def clear_saved_plots():
     """
@@ -33,7 +35,8 @@ def clear_saved_plots():
         for file in os.listdir("plots"):
             os.remove(os.path.join("plots", file))
         saved_plots.clear()
-        st.write("Сохранённые графики очищены")
+        plot_descriptions.clear()
+        st.write("Сохранённые графики и описания очищены")
         return True
     except Exception as e:
         st.error(f"Ошибка при очистке графиков: {e}")
@@ -118,6 +121,9 @@ def plot_feature_distribution(df, feature, save_path=None):
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         fig.savefig(save_path, bbox_inches='tight')
         saved_plots.append(save_path)
+        # Добавление читаемого описания
+        description = f"Распределение признака: {feature}"
+        plot_descriptions.append(description)
         st.write(f"График сохранён как {save_path}")
         
         plt.close(fig)
@@ -160,6 +166,9 @@ def plot_feature_importance(model, feature_names, save_path=None):
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         fig.savefig(save_path, bbox_inches='tight')
         saved_plots.append(save_path)
+        # Добавление читаемого описания
+        description = "Важность признаков в модели регрессии"
+        plot_descriptions.append(description)
         st.write(f"График сохранён как {save_path}")
         
         plt.close(fig)
@@ -301,9 +310,9 @@ def export_to_word(output_file="edu_monitor_report.docx", standard_text=None):
         
         # Добавление графиков
         doc.add_heading("Визуализации", level=1)
-        for plot_path in saved_plots:
+        for plot_path, description in zip(saved_plots, plot_descriptions):
             if os.path.exists(plot_path):
-                doc.add_paragraph(f"График: {os.path.basename(plot_path)}")
+                doc.add_paragraph(f"График: {description}")
                 doc.add_picture(plot_path, width=Inches(6))
             else:
                 st.warning(f"Файл {plot_path} не найден и не включён в отчёт")

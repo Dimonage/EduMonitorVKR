@@ -160,6 +160,9 @@ def evaluate_regression_model(model, X_test, y_test, target_name, feature_names,
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         fig.savefig(save_path, bbox_inches='tight')
         utils.saved_plots.append(save_path)
+        # Добавление читаемого описания
+        description = f"Сравнение фактических и предсказанных значений: {target_name}"
+        utils.plot_descriptions.append(description)
         st.write(f"График сохранён как {save_path}")
         
         plt.close(fig)
@@ -217,6 +220,9 @@ def plot_cluster_scatter(df, clusters, feature_x, feature_y):
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         fig.savefig(save_path, bbox_inches='tight')
         utils.saved_plots.append(save_path)
+        # Добавление читаемого описания
+        description = f"Диаграмма рассеяния кластеров: {feature_x} против {feature_y}"
+        utils.plot_descriptions.append(description)
         st.write(f"График сохранён как {save_path}")
         
         plt.close(fig)
@@ -241,6 +247,9 @@ def plot_cluster_distribution(clusters):
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         fig.savefig(save_path, bbox_inches='tight')
         utils.saved_plots.append(save_path)
+        # Добавление читаемого описания
+        description = "Распределение вузов по кластерам"
+        utils.plot_descriptions.append(description)
         st.write(f"График сохранён как {save_path}")
         
         plt.close(fig)
@@ -277,6 +286,9 @@ def plot_cluster_boxplot(df, clusters, feature):
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         fig.savefig(save_path, bbox_inches='tight')
         utils.saved_plots.append(save_path)
+        # Добавление читаемого описания
+        description = f"Распределение признака по кластерам: {feature}"
+        utils.plot_descriptions.append(description)
         st.write(f"График сохранён как {save_path}")
         
         plt.close(fig)
@@ -297,6 +309,9 @@ def plot_correlation_heatmap(df):
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         fig.savefig(save_path, bbox_inches='tight')
         utils.saved_plots.append(save_path)
+        # Добавление читаемого описания
+        description = "Тепловая карта корреляций между признаками"
+        utils.plot_descriptions.append(description)
         st.write(f"График сохранён как {save_path}")
         
         plt.close(fig)
