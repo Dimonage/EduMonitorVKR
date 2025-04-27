@@ -377,3 +377,26 @@ def main():
                 col for col in st.session_state.df_clean.select_dtypes(include=[np.number]).columns
                 if st.session_state.df_clean[col].var() > 0 and not st.session_state.df_clean[col].isna().all()
             ]
+
+            st.subheader("Диаграмма рассеяния кластеров")
+            feature_x = st.selectbox("Ось X", numeric_cols, key="scatter_x")
+            feature_y = st.selectbox("Ось Y", numeric_cols, key="scatter_y")
+            if st.button("Показать диаграмму рассеяния"):
+                plot_cluster_scatter(st.session_state.df_clean, st.session_state.clusters, feature_x, feature_y)
+            
+            st.subheader("Гистограмма распределения кластеров")
+            if st.button("Показать гистограмму"):
+                plot_cluster_distribution(st.session_state.clusters)
+            
+            st.subheader("Box Plot по кластерам")
+            feature_box = st.selectbox("Признак для Box Plot", numeric_cols, key="boxplot")
+            if st.button("Показать Box Plot"):
+                plot_cluster_boxplot(st.session_state.df_clean, st.session_state.clusters, feature_box)
+        else:
+            st.error("Сначала выполните кластеризацию!")
+    
+    elif task == "Тепловая карта":
+        st.subheader("Тепловая карта корреляций")
+        if st.button("Показать тепловую карту"):
+            plot_correlation_heatmap(st.session_state.df_clean)
+    
