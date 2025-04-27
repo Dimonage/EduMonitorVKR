@@ -322,3 +322,22 @@ def main():
         if st.button("Суммаризировать признаки"):
             summarize_features(st.session_state.df_clean)
     
+    elif task == "Предсказание ЕГЭ":
+        st.subheader("Предсказание среднего балла ЕГЭ")
+        target_col = 'Средний балл ЕГЭ студентов, принятых по результатам ЕГЭ на обучение по очной форме по программам бакалавриата и специалитета за счет средств соответствующих бюджетов бюджетной системы РФ'
+        if target_col in st.session_state.df_clean.columns:
+            if st.button("Обучить модель ЕГЭ"):
+                X_train, X_test, y_train, y_test, scaler, feature_cols = split_data(
+                    st.session_state.df_clean, target_col, log_transform=False
+                )
+                st.session_state.model_ege = train_regression_model(X_train, y_train)
+                st.session_state.feature_names_ege = feature_cols
+                rmse, mae = evaluate_regression_model(
+                    st.session_state.model_ege, X_test, y_test, "Средний балл ЕГЭ",
+                    st.session_state.feature_names_ege
+                )
+                if st.session_state.model_ege:
+                    save_model(st.session_state.model_ege, "model_ege.pkl")
+        else:
+            st.error("Целевая переменная для ЕГЭ отсутствует!")
+    
