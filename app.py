@@ -361,3 +361,19 @@ def main():
         else:
             st.error("Целевая переменная для НИОКР отсутствует!")
     
+    elif task == "Кластеризация":
+        st.subheader("Кластеризация вузов")
+        if st.button("Выполнить кластеризацию"):
+            st.session_state.clusters, st.session_state.kmeans, cluster_scaler = cluster_vuz(
+                st.session_state.df_clean, n_clusters=3
+            )
+            if st.session_state.clusters is not None:
+                st.session_state.df_clean['Кластер'] = st.session_state.clusters
+                save_model(st.session_state.kmeans, "model_kmeans.pkl")
+                save_dataframe(st.session_state.df_clean, "clustered_data.csv")
+        
+        if st.session_state.clusters is not None:
+            numeric_cols = [
+                col for col in st.session_state.df_clean.select_dtypes(include=[np.number]).columns
+                if st.session_state.df_clean[col].var() > 0 and not st.session_state.df_clean[col].isna().all()
+            ]
