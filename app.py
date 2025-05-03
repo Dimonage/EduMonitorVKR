@@ -215,12 +215,17 @@ def plot_cluster_scatter(df, clusters, feature_x, feature_y):
         ax.legend(title="Кластер")
         st.pyplot(fig)
         
-        # Сохранение графика
-        save_path = f"plots/cluster_scatter_{feature_x.replace(' ', '_')}_vs_{feature_y.replace(' ', '_')}_{len(utils.saved_plots)}.png"
+        # Сокращение имен признаков для имени файла, так как при изначальной длинны выдавало ошибку
+        max_length = 50  
+        safe_feature_x = feature_x.replace(' ', '_').replace(',', '').replace('(', '').replace(')', '')[:max_length]
+        safe_feature_y = feature_y.replace(' ', '_').replace(',', '').replace('(', '').replace(')', '')[:max_length]
+        
+        # Формирование безопасного имени файла
+        save_path = f"plots/cluster_scatter_{safe_feature_x}_vs_{safe_feature_y}_{len(utils.saved_plots)}.png"
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         fig.savefig(save_path, bbox_inches='tight')
         utils.saved_plots.append(save_path)
-        # Добавление читаемого описания
+        # Добавление читаемого описания, так как изначально текст был с прочерками
         description = f"Диаграмма рассеяния кластеров: {feature_x} против {feature_y}"
         utils.plot_descriptions.append(description)
         st.write(f"График сохранён как {save_path}")
