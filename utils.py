@@ -368,6 +368,30 @@ def export_filtered_data(df, filename="filtered_data_export.csv"):
     except Exception as e:
         st.error(f"Ошибка при экспорте: {e}")
         return False
+
+def calculate_selected_correlations(df, columns):
+    """
+    Расчёт корреляций для выбранных столбцов.
+    
+    Параметры:
+    df (pandas.DataFrame): Входной датасет
+    columns (list): Список столбцов
+    
+    Возвращает:
+    pandas.DataFrame: Матрица корреляций
+    """
+    try:
+        numeric_cols = [col for col in columns if np.issubdtype(df[col].dtype, np.number)]
+        if not numeric_cols:
+            st.error("Выбранные столбцы не содержат числовых данных")
+            return None
+        corr_matrix = df[numeric_cols].corr()
+        st.write("Матрица корреляций для выбранных столбцов:")
+        st.dataframe(corr_matrix)
+        return corr_matrix
+    except Exception as e:
+        st.error(f"Ошибка при расчёте корреляций: {e}")
+        return None
     
 def export_to_word(output_file="edu_monitor_report.docx", standard_text=None):
     """
