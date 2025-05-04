@@ -389,6 +389,14 @@ def main():
             st.session_state.df_clean = utils.remove_duplicates(st.session_state.df_clean)
             utils.save_dataframe(st.session_state.df_clean, "processed_data.csv")
 
+        st.subheader("Фильтрация данных")
+        filter_col = st.selectbox("Выберите столбец для фильтрации", st.session_state.df_clean.columns, key="filter_col")
+        filter_value = st.text_input("Введите значение для фильтрации", key="filter_value")
+        if st.button("Применить фильтр"):
+            filtered_df = utils.filter_data(st.session_state.df_clean, filter_col, filter_value)
+            st.session_state.df_clean = filtered_df
+            utils.save_dataframe(st.session_state.df_clean, "filtered_data.csv")
+
     elif task == "Предсказание ЕГЭ":
         st.subheader("Предсказание среднего балла ЕГЭ")
         target_col = 'Средний балл ЕГЭ студентов, принятых по результатам ЕГЭ на обучение по очной форме по программам бакалавриата и специалитета за счет средств соответствующих бюджетов бюджетной системы РФ'
