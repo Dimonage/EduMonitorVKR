@@ -307,6 +307,26 @@ def check_duplicates(df):
         st.error(f"Ошибка при проверке дубликатов: {e}")
         return None
 
+def remove_duplicates(df):
+    """
+    Удаление дубликатов из датасета.
+    
+    Параметры:
+    df (pandas.DataFrame): Входной датасет
+    
+    Возвращает:
+    pandas.DataFrame: Датасет без дубликатов
+    """
+    try:
+        initial_shape = df.shape
+        df_clean = df.drop_duplicates()
+        st.write(f"Удалено дубликатов: {initial_shape[0] - df_clean.shape[0]}")
+        st.write(f"Новый размер датасета: {df_clean.shape}")
+        return df_clean
+    except Exception as e:
+        st.error(f"Ошибка при удалении дубликатов: {e}")
+        return df
+    
 def export_to_word(output_file="edu_monitor_report.docx", standard_text=None):
     """
     Экспорт результатов анализа в документ Word с текстом и графиками
