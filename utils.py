@@ -14,6 +14,7 @@ import streamlit as st
 import os
 from docx import Document
 from docx.shared import Inches
+from scipy import stats
 
 # Настройка стиля графиков
 sns.set(style="whitegrid")
@@ -391,6 +392,42 @@ def calculate_selected_correlations(df, columns):
         return corr_matrix
     except Exception as e:
         st.error(f"Ошибка при расчёте корреляций: {e}")
+        return None
+    
+def calculate_descriptive_stats(df, column):
+    """
+    Расчёт описательных статистик для выбранного столбца.
+    
+    Параметры:
+    df (pandas.DataFrame): Входной датасет
+    column (str): Столбец для анализа
+    
+    Возвращает:
+    dict: Словарь с описательными статистиками
+    """
+    try:
+        if column not in df.columns:
+            st.error(f"Столбец '{column}' отсутствует")
+            return None
+        if not np.issubdtype(df[column].dtype, np.number):
+            st.error("Столбец должен быть числовым")
+            return None
+        
+        stats_dict = {
+            'Среднее': df[column].mean(),
+            'Медиана': df[column].median(),
+            'Мода': stats.mode(df[column], keepdims=True)[0][0],
+            'Стд. отклонение': df[column].std(),
+            'Минимум': df[column].min(),
+            'Максимум': df[column].max()
+        }
+        stats_df = pd.DataFrame.from_dict(stats_dict, orient='index', columns=['Значение'])
+        stats_df['Значение'] = stats_df['Значение'].round(2)
+        st.write(f"Описательные статистики для столбца '{column}':")
+        st.dataframe(stats_df)
+        return stats_dict
+    except Exception as e:
+        st.error(f"Ошибка при расчёте статистик: {e}")
         return None
     
 def export_to_word(output_file="edu_monitor_report.docx", standard_text=None):
