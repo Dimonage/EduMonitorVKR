@@ -350,6 +350,25 @@ def filter_data(df, column, value):
         st.error(f"Ошибка при фильтрации: {e}")
         return df
     
+def export_filtered_data(df, filename="filtered_data_export.csv"):
+    """
+    Экспорт отфильтрованного датасета в CSV.
+    
+    Параметры:
+    df (pandas.DataFrame): Датасет для экспорта
+    filename (str): Имя файла
+    
+    Возвращает:
+    bool: True, если экспорт успешен
+    """
+    try:
+        df.to_csv(filename, index=False)
+        st.write(f"Отфильтрованный датасет сохранён как {filename}")
+        return True
+    except Exception as e:
+        st.error(f"Ошибка при экспорте: {e}")
+        return False
+    
 def export_to_word(output_file="edu_monitor_report.docx", standard_text=None):
     """
     Экспорт результатов анализа в документ Word с текстом и графиками
