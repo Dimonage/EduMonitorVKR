@@ -394,6 +394,31 @@ def calculate_selected_correlations(df, columns):
         st.error(f"Ошибка при расчёте корреляций: {e}")
         return None
     
+def export_descriptive_stats(stats_dict, column, filename="descriptive_stats.xlsx"):
+    """
+    Экспорт описательных статистик в Excel.
+    
+    Параметры:
+    stats_dict (dict): Словарь со статистиками
+    column (str): Название столбца
+    filename (str): Имя файла
+    
+    Возвращает:
+    bool: True, если экспорт успешен
+    """
+    try:
+        if stats_dict is None:
+            st.error("Нет данных для экспорта")
+            return False
+        stats_df = pd.DataFrame.from_dict(stats_dict, orient='index', columns=['Значение'])
+        stats_df['Значение'] = stats_df['Значение'].round(2)
+        stats_df.to_excel(filename, sheet_name=f"Stats_{column}", engine='xlsxwriter')
+        st.write(f"Статистики сохранены в {filename}")
+        return True
+    except Exception as e:
+        st.error(f"Ошибка при экспорте статистик: {e}")
+        return False
+    
 def calculate_descriptive_stats(df, column):
     """
     Расчёт описательных статистик для выбранного столбца.
