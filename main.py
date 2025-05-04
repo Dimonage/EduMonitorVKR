@@ -389,6 +389,11 @@ def main():
             st.session_state.df_clean = utils.remove_duplicates(st.session_state.df_clean)
             utils.save_dataframe(st.session_state.df_clean, "processed_data.csv")
 
+        st.subheader("Анализ корреляций")
+        corr_cols = st.multiselect("Выберите столбцы для корреляции", st.session_state.df_clean.columns, key="corr_cols")
+        if st.button("Показать корреляции"):
+            utils.calculate_selected_correlations(st.session_state.df_clean, corr_cols)
+
         if st.button("Экспортировать отфильтрованные данные"):
             utils.export_filtered_data(st.session_state.df_clean)
             with open("filtered_data_export.csv", "rb") as file:
