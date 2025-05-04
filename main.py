@@ -389,6 +389,16 @@ def main():
             st.session_state.df_clean = utils.remove_duplicates(st.session_state.df_clean)
             utils.save_dataframe(st.session_state.df_clean, "processed_data.csv")
 
+        if st.button("Экспортировать отфильтрованные данные"):
+            utils.export_filtered_data(st.session_state.df_clean)
+            with open("filtered_data_export.csv", "rb") as file:
+                st.download_button(
+                    label="Скачать отфильтрованный датасет",
+                    data=file,
+                    file_name="filtered_data_export.csv",
+                    mime="text/csv"
+                )
+
         st.subheader("Фильтрация данных")
         filter_col = st.selectbox("Выберите столбец для фильтрации", st.session_state.df_clean.columns, key="filter_col")
         filter_value = st.text_input("Введите значение для фильтрации", key="filter_value")
