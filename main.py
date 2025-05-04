@@ -404,13 +404,6 @@ def main():
                     mime="text/csv"
                 )
 
-        st.subheader("Описательные статистики")
-        stats_col = st.selectbox("Выберите столбец для статистик", 
-                        [col for col in st.session_state.df_clean.columns if np.issubdtype(st.session_state.df_clean[col].dtype, np.number)], 
-                        key="stats_col")
-        if st.button("Показать статистики"):
-            utils.calculate_descriptive_stats(st.session_state.df_clean, stats_col)
-
         st.subheader("Фильтрация данных")
         filter_col = st.selectbox("Выберите столбец для фильтрации", st.session_state.df_clean.columns, key="filter_col")
         filter_value = st.text_input("Введите значение для фильтрации", key="filter_value")
