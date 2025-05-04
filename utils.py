@@ -280,6 +280,32 @@ def summarize_features(df, max_features=10):
     except Exception as e:
         st.error(f"Ошибка при анализе признаков: {e}")
         return None
+    
+def check_duplicates(df):
+    """
+    Проверка датасета на наличие дубликатов.
+    
+    Параметры:
+    df (pandas.DataFrame): Входной датасет
+    
+    Возвращает:
+    dict: Информация о дубликатах (количество и строки)
+    """
+    try:
+        duplicates = df.duplicated().sum()
+        duplicate_rows = df[df.duplicated()].head()
+        result = {
+            'count': duplicates,
+            'rows': duplicate_rows
+        }
+        st.write(f"Найдено дубликатов: {duplicates}")
+        if duplicates > 0:
+            st.write("Примеры дублированных строк:")
+            st.dataframe(duplicate_rows)
+        return result
+    except Exception as e:
+        st.error(f"Ошибка при проверке дубликатов: {e}")
+        return None
 
 def export_to_word(output_file="edu_monitor_report.docx", standard_text=None):
     """

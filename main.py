@@ -382,6 +382,9 @@ def main():
         if st.button("Суммаризировать признаки"):
             utils.summarize_features(st.session_state.df_clean)
     
+        if st.button("Проверить дубликаты"):
+            utils.check_duplicates(st.session_state.df_clean)
+
     elif task == "Предсказание ЕГЭ":
         st.subheader("Предсказание среднего балла ЕГЭ")
         target_col = 'Средний балл ЕГЭ студентов, принятых по результатам ЕГЭ на обучение по очной форме по программам бакалавриата и специалитета за счет средств соответствующих бюджетов бюджетной системы РФ'
