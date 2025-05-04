@@ -327,6 +327,29 @@ def remove_duplicates(df):
         st.error(f"Ошибка при удалении дубликатов: {e}")
         return df
     
+def filter_data(df, column, value):
+    """
+    Фильтрация датасета по значению в указанном столбце.
+    
+    Параметры:
+    df (pandas.DataFrame): Входной датасет
+    column (str): Столбец для фильтрации
+    value: Значение для фильтрации
+    
+    Возвращает:
+    pandas.DataFrame: Отфильтрованный датасет
+    """
+    try:
+        if column not in df.columns:
+            st.error(f"Столбец '{column}' отсутствует")
+            return df
+        filtered_df = df[df[column] == value]
+        st.write(f"Отфильтровано {filtered_df.shape[0]} строк по {column} = {value}")
+        return filtered_df
+    except Exception as e:
+        st.error(f"Ошибка при фильтрации: {e}")
+        return df
+    
 def export_to_word(output_file="edu_monitor_report.docx", standard_text=None):
     """
     Экспорт результатов анализа в документ Word с текстом и графиками
