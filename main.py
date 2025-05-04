@@ -385,6 +385,10 @@ def main():
         if st.button("Проверить дубликаты"):
             utils.check_duplicates(st.session_state.df_clean)
 
+        if st.button("Удалить дубликаты"):
+            st.session_state.df_clean = utils.remove_duplicates(st.session_state.df_clean)
+            utils.save_dataframe(st.session_state.df_clean, "processed_data.csv")
+
     elif task == "Предсказание ЕГЭ":
         st.subheader("Предсказание среднего балла ЕГЭ")
         target_col = 'Средний балл ЕГЭ студентов, принятых по результатам ЕГЭ на обучение по очной форме по программам бакалавриата и специалитета за счет средств соответствующих бюджетов бюджетной системы РФ'
