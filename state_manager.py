@@ -1,28 +1,27 @@
+# state_manager.py — инициализация состояния Streamlit
+
 import streamlit as st
 
 
 class SessionStateManager:
-    """
-    Менеджер состояния Streamlit.
-    Инициализирует все ключи session_state при запуске приложения.
-    """
+    """Класс для инициализации и управления состоянием сессии"""
 
-    DEFAULT_KEYS = {
-        "df_clean": None,
-        "clusters": None,
-        "kmeans": None,
-        "model_ege": None,
-        "model_niokr": None,
-        "feature_names_ege": None,
-        "feature_names_niokr": None,
-        "data_loaded": False
-    }
+    @staticmethod
+    def initialize():
+        """Инициализация ключевых переменных в session_state"""
+        defaults = {
+            "data_loaded": False,
+            "df_clean": None,
+            "trigger_rerun": False,
+        }
 
-    def initialize(self) -> None:
-        """
-        Инициализирует session_state со значениями по умолчанию,
-        если они ещё не заданы.
-        """
-        for key, value in SessionStateManager.DEFAULT_KEYS.items():
+        for key, value in defaults.items():
             if key not in st.session_state:
                 st.session_state[key] = value
+
+        # Инициализация флагов для моделей
+        for model_key in ["ege", "niokr", "kmeans"]:
+            if f"model_{model_key}" not in st.session_state:
+                st.session_state[f"model_{model_key}"] = None
+            if f"{model_key}_trained" not in st.session_state:
+                st.session_state[f"{model_key}_trained"] = False

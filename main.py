@@ -1,117 +1,95 @@
 import streamlit as st
 
-from state_manager import SessionStateManager
 from config import EGE_TARGET, NIOKR_TARGET
+from state_manager import SessionStateManager
 from pipeline import DataPipeline
 from models import ModelManager
 from visualization import Visualizer
-from utils import io_tools
+from utils import globals as g
+from utils.report_generator import export_to_word
+from utils.ui_components import render_data_exploration_ui, render_clustering_visuals
 
 
-def main() -> None:
+def main():
     st.set_page_config(page_title="EduMonitor", layout="wide")
-    st.title("🎓 Система анализа мониторинга вузов — EduMonitor")
-    manager = SessionStateManager()
-    # Инициализация состояния
-    manager.initialize()
+    st.title("🎓 EduMonitor: Анализ мониторинга вузов")
 
-    # Обработка rerun-флага (гарантирует отображение интерфейса после загрузки)
-    if st.session_state.get("trigger_rerun"):
-        st.session_state.trigger_rerun = False
-        st.rerun()
+    # Инициализация сессии
+    SessionStateManager.initialize()
 
     # Инициализация компонентов
-    data_pipeline = DataPipeline()
-    model_manager = ModelManager()
+    pipeline = DataPipeline()
+    models = ModelManager()
     visualizer = Visualizer()
 
-    # Загрузка и предобработка данных
-    with st.expander("📂 Загрузка и предобработка данных", expanded=not st.session_state.data_loaded):
-        df = data_pipeline.handle_data_upload()
+    # Блок загрузки данных
+    with st.expander("📂 Загрузка и предобработка", expanded=not st.session_state.data_loaded):
+        df = pipeline.handle_data_upload()
         if df is not None:
-            st.success("✅ Данные успешно загружены и обработаны.")
+            st.success("✅ Данные загружены")
             st.write(df.head())
-            st.session_state.trigger_rerun = True
-            st.rerun()
-        else:
-            st.info("Загрузите файл формата .xlsx")
 
     if not st.session_state.data_loaded:
-        st.warning("Пожалуйста, загрузите данные для продолжения.")
+        st.info("🔄 Пожалуйста, загрузите файл .xlsx")
         return
 
-    # Выбор задачи
-    task = st.sidebar.selectbox(
-        "Выберите задачу",
-        [
-            "Анализ данных",
-            "Предсказание ЕГЭ",
-            "Предсказание НИОКР",
-            "Кластеризация",
-            "Тепловая карта"
-        ]
-    )
+    # Выбор действия
+    task = st.sidebar.radio("Навигация", [
+        "Анализ данных",
+        "Предсказание ЕГЭ",
+        "Предсказание НИОКР",
+        "Кластеризация",
+        "Тепловая карта"
+    ])
 
-    # Обработка задач
+    # Выполнение выбранной задачи
+    df_clean = st.session_state.get("df_clean")
+
     if task == "Анализ данных":
-        data_pipeline.render_data_analysis()
+        render_data_exploration_ui(df_clean)
 
     elif task == "Предсказание ЕГЭ":
-        model_manager.train_regression_ui(
-            df=st.session_state.df_clean,
-            target_col=EGE_TARGET,
-            model_key="ege",
-            log_transform=False,
-            title="🔢 Предсказание среднего балла ЕГЭ"
-        )
+        models.train_regression_ui(df_clean, EGE_TARGET, "ege", log_transform=False,
+                                   title="📊 Прогноз среднего балла ЕГЭ")
 
     elif task == "Предсказание НИОКР":
-        model_manager.train_regression_ui(
-            df=st.session_state.df_clean,
-            target_col=NIOKR_TARGET,
-            model_key="niokr",
-            log_transform=True,
-            title="🌐 Предсказание объема НИОКР"
-        )
+        models.train_regression_ui(df_clean, NIOKR_TARGET, "niokr", log_transform=True, title="🧪 Прогноз объема НИОКР")
 
     elif task == "Кластеризация":
-        data_pipeline.render_clustering_ui()
+        with st.form("cluster_form"):
+            n_clusters = st.slider("Количество кластеров", 2, 10, 3)
+            submitted = st.form_submit_button("📊 Кластеризовать")
+            if submitted:
+                clustered_df, clusters = pipeline.clusterize(df_clean, n_clusters)
+                render_clustering_visuals(clustered_df, clusters)
 
     elif task == "Тепловая карта":
-        visualizer.plot_correlation_heatmap(st.session_state.df_clean)
+        visualizer.plot_correlation_heatmap(df_clean)
 
     # Управление моделями
-    with st.sidebar.expander("📊 Управление моделями"):
-        if st.button("🔖 Сохранить все модели"):
-            model_manager.save_all()
+    with st.sidebar.expander("⚙️ Управление моделями"):
+        if st.button("💾 Сохранить все модели"):
+            models.save_all()
         if st.button("📂 Загрузить модели"):
-            model_manager.load_all()
+            models.load_all()
 
     # Экспорт отчета
     with st.sidebar.expander("📄 Экспорт отчета"):
-        standard_text = st.text_area("Введите текст для отчета", height=150)
-        if st.button("📅 Экспортировать в Word"):
-            if io_tools.saved_plots:
-                with st.spinner("Создание отчета..."):
-                    success = io_tools.export_to_word(
-                        output_file="edu_monitor_report.docx",
-                        standard_text=standard_text or None
-                    )
-                    if success:
-                        with open("edu_monitor_report.docx", "rb") as f:
-                            st.download_button(
-                                label="🔗 Скачать отчет",
-                                data=f,
-                                file_name="edu_monitor_report.docx",
-                                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                            )
+        text = st.text_area("Текст отчета", height=150)
+        if st.button("📥 Сформировать Word"):
+            if g.saved_plots:
+                if export_to_word("edu_monitor_report.docx", text or None):
+                    with open("edu_monitor_report.docx", "rb") as f:
+                        st.download_button("📎 Скачать отчет", f, file_name="edu_monitor_report.docx")
             else:
-                st.warning("Нет графиков для экспорта. Проведите анализ или визуализацию.")
+                st.warning("Нет графиков для экспорта")
 
-    # Очистка визуализаций
-    with st.sidebar.expander("❌ Очистка графиков"):
-        if st.button("🧼 Очистить сохраненные графики"):
-            io_tools.clear_saved_plots()
+    # Очистка графиков
+    with st.sidebar.expander("🧹 Очистка"):
+        if st.button("Очистить графики"):
+            g.saved_plots.clear()
+            g.plot_descriptions.clear()
+            st.success("Графики очищены")
 
 
 if __name__ == "__main__":

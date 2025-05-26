@@ -1,56 +1,60 @@
+# visualization.py — визуализация метрик и корреляций
+
 import streamlit as st
 import matplotlib.pyplot as plt
 import seaborn as sns
-import numpy as np
+import pandas as pd
 import os
+
+from utils.decorators import timeit, handle_errors
+from utils.globals import saved_plots, plot_descriptions
 from config import PLOTS_DIR
-from utils import io_tools
 
 
 class Visualizer:
-    def __init__(self):
-        sns.set(style="whitegrid")
-        plt.rcParams["figure.figsize"] = (10, 6)
 
-    def plot_prediction_scatter(self, y_true, y_pred, title):
+    def __init__(self):
+        os.makedirs(PLOTS_DIR, exist_ok=True)
+
+    @handle_errors
+    @timeit
+    def plot_prediction_scatter(self, y_true, y_pred, label: str):
         fig, ax = plt.subplots()
-        ax.scatter(y_true, y_pred, alpha=0.5)
+        ax.scatter(y_true, y_pred, alpha=0.6, color='mediumseagreen')
         ax.plot([y_true.min(), y_true.max()], [y_true.min(), y_true.max()], 'r--')
         ax.set_xlabel("Фактические значения")
         ax.set_ylabel("Предсказанные значения")
-        ax.set_title(f"{title} — предсказание vs факт")
-        st.pyplot(fig)
+        ax.set_title(f"Сравнение предсказания и факта: {label}")
+        self._render_and_save(fig, f"scatter_{label}.png", f"Предсказание vs Факт: {label}")
 
-        safe_title = title.replace(' ', '_')[:50]
-        filename = f"{PLOTS_DIR}/regression_scatter_{safe_title}_{len(io_tools.saved_plots)}.png"
-        self._save_plot(fig, filename, f"Сравнение факта и прогноза: {title}")
+    @handle_errors
+    @timeit
+    def plot_feature_importance(self, model, feature_names: list[str]):
+        importances = model.feature_importances_
+        sorted_idx = importances.argsort()[::-1]
+        features = [feature_names[i] for i in sorted_idx[:10]]
+        scores = importances[sorted_idx[:10]]
 
-    def plot_feature_importance(self, model, features):
-        if not hasattr(model, 'feature_importances'):
-            st.warning("Модель не поддерживает важность признаков")
-            return
+        fig, ax = plt.subplots()
+        sns.barplot(x=scores, y=features, ax=ax, palette="viridis")
+        ax.set_title("Топ-10 важных признаков")
+        ax.set_xlabel("Важность")
+        self._render_and_save(fig, "feature_importance.png", "Топ-10 признаков модели")
+
+    @handle_errors
+    @timeit
+    def plot_correlation_heatmap(self, df: pd.DataFrame):
+        corr = df.select_dtypes(include=["number"]).corr()
         fig, ax = plt.subplots(figsize=(10, 8))
-        sns.barplot(x=model.feature_importances_, y=features, ax=ax, palette='viridis')
-        ax.set_title("Важность признаков")
+        sns.heatmap(corr, cmap="coolwarm", annot=True, fmt=".2f", ax=ax)
+        ax.set_title("Корреляционная матрица")
+        self._render_and_save(fig, "correlation_matrix.png", "Корреляционная матрица")
+
+    def _render_and_save(self, fig, filename: str, description: str):
+        path = os.path.join(PLOTS_DIR, filename)
+        fig.tight_layout()
         st.pyplot(fig)
-
-        filename = f"{PLOTS_DIR}/feature_importance_{len(io_tools.saved_plots)}.png"
-        self._save_plot(fig, filename, "Важность признаков модели")
-
-    def plot_correlation_heatmap(self, df):
-        fig, ax = plt.subplots(figsize=(12, 10))
-        corr = df.corr()
-        sns.heatmap(corr, annot=False, cmap="coolwarm", center=0, ax=ax)
-        ax.set_title("Тепловая карта корреляций")
-        st.pyplot(fig)
-
-        filename = f"{PLOTS_DIR}/correlation_heatmap_{len(io_tools.saved_plots)}.png"
-        self._save_plot(fig, filename, "Тепловая карта корреляций")
-
-    def _save_plot(self, fig, filename, description):
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
-        fig.savefig(filename, bbox_inches='tight')
-        io_tools.saved_plots.append(filename)
-        io_tools.plot_descriptions.append(description)
-        st.write(f"График сохранён как {filename}")
+        fig.savefig(path)
+        saved_plots.append(path)
+        plot_descriptions.append(description)
         plt.close(fig)

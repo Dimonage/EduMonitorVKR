@@ -1,8 +1,7 @@
-# utils/globals.py
+# utils/globals.py — глобальные переменные приложения
 
-# Хранилище путей к сохранённым графикам и их описаниям
-type_saved_plots = list[str]
-type_plot_descriptions = list[str]
+# Пути к сохранённым графикам (для отчёта)
+saved_plots: list[str] = []
 
-saved_plots: type_saved_plots = []
-plot_descriptions: type_plot_descriptions = []
+# Подписи к сохранённым графикам
+plot_descriptions: list[str] = []
