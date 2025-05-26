@@ -86,7 +86,15 @@ def main():
             n_clusters = st.slider("Количество кластеров", 2, 10, 3)
             if st.button("📍 Кластеризовать"):
                 df_clustered, clusters = pipeline.clusterize(df_filtered, n_clusters)
-                render_clustering_visuals(df_clustered, clusters)
+                st.session_state["clustered_df"] = df_clustered
+                st.session_state["clusters"] = clusters
+                st.session_state["clusters_ready"] = True
+                st.success("✅ Кластеры рассчитаны. Постройте визуализации ниже.")
+            if st.session_state.get("clusters_ready", False):
+                render_clustering_visuals(
+                    st.session_state["clustered_df"],
+                    st.session_state["clusters"]
+                )
 
     elif task == "Тепловая карта":
         visualizer.plot_correlation_heatmap(df_filtered)

@@ -46,7 +46,9 @@ class ModelManager:
             "rmse": rmse,
             "mae": mae,
             "algorithm": algorithm,
-            "key": model_key
+            "key": model_key,
+            "y_true": y_test,
+            "y_pred": model.predict(X_test)
         }
 
     @timeit
@@ -113,7 +115,7 @@ class ModelManager:
                 st.markdown("### 📊 Сравнение моделей")
                 for r in scores:
                     st.markdown(f"**{r['algorithm']}**: RMSE = `{r['rmse']:.2f}`, MAE = `{r['mae']:.2f}`")
-                    self.visualizer.plot_prediction_scatter(y_true=None, y_pred=None, label=r["key"])
+                    self.visualizer.plot_prediction_scatter(y_true=r["y_true"], y_pred=r["y_pred"], label=r["key"])
                     self.visualizer.plot_feature_importance(r["model"], st.session_state[f"feature_names_{r['key']}"])
 
     def save_model(self, key: str):

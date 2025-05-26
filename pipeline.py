@@ -49,6 +49,7 @@ class DataPipeline:
             df = df.dropna(subset=[target_col])
         return df
 
+
     @handle_errors
     @timeit
     def split_data(self, df: pd.DataFrame, target_col: str, log_transform: bool = False):

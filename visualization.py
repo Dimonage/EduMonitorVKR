@@ -7,6 +7,7 @@ import pandas as pd
 import os
 from config import PLOTS_DIR
 from utils.decorators import timeit, handle_errors
+import plotly.express as px
 
 
 class Visualizer:
@@ -53,12 +54,38 @@ class Visualizer:
     @handle_errors
     @timeit
     def plot_correlation_heatmap(self, df: pd.DataFrame):
-        corr = df.select_dtypes(include=["number"]).corr()
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.heatmap(corr, cmap="coolwarm", annot=True, fmt=".2f", ax=ax)
-        ax.set_title("Корреляционная матрица", fontsize=14)
-        ax.tick_params(labelsize=10)
-        self._render_and_save(fig, "correlation_matrix.png", "Корреляционная матрица")
+        numeric_df = df.select_dtypes(include=["number"])
+        corr = numeric_df.corr()
+
+        fig = px.imshow(
+            corr,
+            labels=dict(color="Коэффициент корреляции"),
+            x=corr.columns,
+            y=corr.columns,
+            color_continuous_scale="RdBu",
+            aspect="auto",
+            height=1400,
+            width=1600
+        )
+
+        fig.update_layout(
+            title="Корреляционная матрица",
+            margin=dict(l=250, r=250, t=60, b=250),  # большие отступы для подписей
+            xaxis=dict(
+                tickangle=45,
+                tickfont=dict(size=9),
+                side="top"
+            ),
+            yaxis=dict(
+                tickfont=dict(size=9)
+            )
+        )
+
+        fig.update_traces(
+            hovertemplate="Пара: %{x} — %{y}<br>Значение: %{z:.2f}<extra></extra>"
+        )
+
+        st.plotly_chart(fig, use_container_width=False)
 
     def _render_and_save(self, fig, filename: str, description: str):
         path = os.path.join(PLOTS_DIR, filename)
