@@ -1,17 +1,11 @@
-# ui_components.py — визуализация анализа и кластеризации
+# utils/ui_components.py — визуальные компоненты Streamlit UI
 
 import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
-
-from utils.io_tools import save_dataframe
-from utils.analysis_tools import (
-    show_missing_values,
-    show_column_summary,
-    check_duplicates
-)
-from config import DATA_PATHS
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 def render_data_exploration_ui(df: pd.DataFrame):
@@ -19,84 +13,82 @@ def render_data_exploration_ui(df: pd.DataFrame):
         st.warning("📭 Нет данных для анализа.")
         return
 
-    if st.button("🔍 Проверить пропущенные значения"):
-        show_missing_values(df)
+    if st.button("🔍 Проверить пропуски"):
+        missing = df.isna().sum()
+        st.dataframe(pd.DataFrame({
+            "Столбец": missing.index,
+            "Пропусков": missing.values,
+            "%": (missing / len(df) * 100).round(2)
+        }))
 
-    feature = st.selectbox("📌 Признак для гистограммы", df.select_dtypes(include=[np.number]).columns)
-    if st.button("📊 Построить распределение", key="btn_dist"):
-        fig = px.histogram(df, x=feature, nbins=30, title=f"Распределение: {feature}")
-        fig.update_layout(
-            xaxis_title=feature,
-            yaxis_title="Частота",
-            height=500
-        )
-        st.plotly_chart(fig, use_container_width=True)
+    feature = st.selectbox("Выберите признак для гистограммы", df.select_dtypes(include=[np.number]).columns)
+    if st.button("📊 Построить распределение", key="dist_btn"):
+        fig, ax = plt.subplots()
+        sns.histplot(df[feature], kde=True, ax=ax, color='skyblue')
+        ax.set_title(f"Распределение: {feature}")
+        st.pyplot(fig)
+        plt.close(fig)
 
-    if st.button("📋 Характеристики признаков", key="btn_summary"):
-        show_column_summary(df)
+    if st.button("📋 Характеристики признаков", key="summary_btn"):
+        summary = pd.DataFrame({
+            "Признак": df.columns,
+            "Тип": df.dtypes,
+            "Среднее": df.mean(numeric_only=True),
+            "Дисперсия": df.var(numeric_only=True),
+            "Уникальные": df.nunique()
+        })
+        st.dataframe(summary)
 
-    if st.button("🔁 Проверить дубликаты", key="btn_dup"):
-        check_duplicates(df)
+    if st.button("🔁 Проверить дубликаты", key="dup_btn"):
+        count = df.duplicated().sum()
+        st.info(f"🔁 Найдено дубликатов: {count}")
 
-    if st.button("🧹 Удалить дубликаты", key="btn_drop_dup"):
+    if st.button("🧹 Удалить дубликаты", key="clean_btn"):
         df_clean = df.drop_duplicates()
         st.session_state.df_clean = df_clean
-        st.success(f"✅ Дубликаты удалены. Размер: {df_clean.shape}")
-        save_dataframe(df_clean, DATA_PATHS["processed"])
+        st.success(f"🧹 Дубликаты удалены. Новый размер: {df_clean.shape}")
 
 
 def render_clustering_visuals(df: pd.DataFrame, clusters: np.ndarray):
+    if df is None or clusters is None:
+        st.warning("Нет данных для кластеризации")
+        return
+
     numeric_cols = df.select_dtypes(include=[np.number]).columns.drop("Кластер", errors="ignore")
 
-    st.subheader("📈 Диаграмма рассеяния")
-    x = st.selectbox("Ось X", numeric_cols, key="scatter_x")
-    y = st.selectbox("Ось Y", numeric_cols, key="scatter_y")
-    if st.button("📍 Построить scatter plot"):
-        plot_cluster_scatter(df, clusters, x, y)
+    st.subheader("📌 Диаграмма рассеяния (Plotly)")
+    col1, col2 = st.columns(2)
+    with col1:
+        x = st.selectbox("X ось", numeric_cols, key="scatter_x")
+    with col2:
+        y = st.selectbox("Y ось", numeric_cols, key="scatter_y")
 
-    st.subheader("🎯 Box plot по кластерам")
-    feat = st.selectbox("Признак", numeric_cols, key="boxplot_feat")
-    if st.button("📦 Построить box plot"):
-        plot_cluster_boxplot(df, clusters, feat)
-
-    st.subheader("📊 Гистограмма кластеров")
-    if st.button("📉 Построить гистограмму кластеров"):
-        df_plot = pd.DataFrame({"Кластер": clusters})
-        fig = px.histogram(
-            df_plot,
-            x="Кластер",
-            color="Кластер",
-            title="Распределение по кластерам",
-            height=500
+    if st.button("📈 Построить scatter plot"):
+        df_plot = df.copy()
+        df_plot["Кластер"] = clusters
+        fig = px.scatter(
+            df_plot, x=x, y=y, color="Кластер",
+            title=f"Кластеры: {x} vs {y}", height=600
         )
         st.plotly_chart(fig, use_container_width=True)
 
+    st.subheader("📦 BoxPlot")
+    feat = st.selectbox("Признак для boxplot", numeric_cols, key="boxplot_feat")
+    if st.button("📦 Построить boxplot"):
+        df_plot = df.copy()
+        df_plot["Кластер"] = clusters
+        fig = px.box(
+            df_plot, x="Кластер", y=feat, color="Кластер",
+            title=f"BoxPlot по кластерам: {feat}", height=600
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
-def plot_cluster_scatter(df: pd.DataFrame, clusters: np.ndarray, x: str, y: str):
-    df_plot = df.copy()
-    df_plot["Кластер"] = clusters
-    fig = px.scatter(
-        df_plot,
-        x=x,
-        y=y,
-        color="Кластер",
-        title=f"Кластеры: {x} vs {y}",
-        height=600,
-        hover_data=df_plot.columns
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-
-def plot_cluster_boxplot(df: pd.DataFrame, clusters: np.ndarray, feature: str):
-    df_plot = df.copy()
-    df_plot["Кластер"] = clusters
-    fig = px.box(
-        df_plot,
-        x="Кластер",
-        y=feature,
-        color="Кластер",
-        title=f"Boxplot по кластерам: {feature}",
-        height=600,
-        points="outliers"
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    st.subheader("📊 Гистограмма кластеров")
+    if st.button("📉 Построить гистограмму кластеров"):
+        cluster_counts = pd.Series(clusters).value_counts().sort_index()
+        fig = px.bar(
+            x=cluster_counts.index, y=cluster_counts.values,
+            labels={"x": "Кластер", "y": "Количество"},
+            title="Распределение по кластерам", height=500
+        )
+        st.plotly_chart(fig, use_container_width=True)
