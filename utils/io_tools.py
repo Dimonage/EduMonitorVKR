@@ -3,7 +3,7 @@
 import streamlit as st
 import pandas as pd
 import joblib
-
+import os
 
 @st.cache_data(show_spinner=False)
 def load_dataframe(path: str) -> pd.DataFrame | None:
@@ -28,6 +28,7 @@ def save_dataframe(df: pd.DataFrame, filename: str) -> bool:
 
 def save_model(model, path: str):
     try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)  # 🛠 создаёт папку при необходимости
         joblib.dump(model, path)
         st.success(f"🧠 Модель сохранена: {path}")
     except Exception as e:

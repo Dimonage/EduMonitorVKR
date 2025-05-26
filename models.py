@@ -21,11 +21,11 @@ class ModelManager:
     @handle_errors
     @timeit
     def train_and_evaluate(
-        self,
-        df,
-        target_col: str,
-        model_key: str,
-        log_transform: bool
+            self,
+            df,
+            target_col: str,
+            model_key: str,
+            log_transform: bool
     ) -> dict | None:
         """Обработка полного цикла обучения и оценки модели"""
         df_clean = self.pipeline.preprocess(df, target_col)
@@ -33,9 +33,12 @@ class ModelManager:
             st.error("⚠️ Обработанный датасет пуст.")
             return None
 
-        X_train, X_test, y_train, y_test, scaler, features = self.pipeline.split_data(
-            df_clean, target_col, log_transform=log_transform
-        )
+        split_result = self.pipeline.split_data(df_clean, target_col, log_transform=log_transform)
+        if split_result is None:
+            st.error("❌ Не удалось разбить данные. Проверьте, что все признаки числовые.")
+            return None
+
+        X_train, X_test, y_train, y_test, scaler, features = split_result
 
         model = self.train_model(X_train, y_train)
         rmse, mae = self.evaluate_model(

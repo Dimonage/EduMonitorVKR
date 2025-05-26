@@ -55,13 +55,33 @@ def main():
     elif task == "Предсказание НИОКР":
         models.train_regression_ui(df_clean, NIOKR_TARGET, "niokr", log_transform=True, title="🧪 Прогноз объема НИОКР")
 
+
+
     elif task == "Кластеризация":
-        with st.form("cluster_form"):
-            n_clusters = st.slider("Количество кластеров", 2, 10, 3)
-            submitted = st.form_submit_button("📊 Кластеризовать")
-            if submitted:
-                clustered_df, clusters = pipeline.clusterize(df_clean, n_clusters)
-                render_clustering_visuals(clustered_df, clusters)
+
+        st.subheader("🔗 Кластеризация вузов")
+
+        n_clusters = st.slider("Количество кластеров", 2, 10, 3)
+
+        if st.button("📊 Кластеризовать"):
+            clustered_df, clusters = pipeline.clusterize(df_clean, n_clusters)
+
+            st.session_state["cluster_df"] = clustered_df
+
+            st.session_state["clusters"] = clusters
+
+            st.session_state["cluster_ready"] = True
+
+        # если кластеризация уже была выполнена
+
+        if st.session_state.get("cluster_ready"):
+            render_clustering_visuals(
+
+                st.session_state["cluster_df"],
+
+                st.session_state["clusters"]
+
+            )
 
     elif task == "Тепловая карта":
         visualizer.plot_correlation_heatmap(df_clean)

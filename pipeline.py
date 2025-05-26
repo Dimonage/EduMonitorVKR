@@ -48,14 +48,10 @@ class DataPipeline:
 
     @handle_errors
     @timeit
-    def split_data(
-        self,
-        df: pd.DataFrame,
-        target_col: str,
-        log_transform: bool = False
-    ) -> tuple:
-        """Разделение данных на train/test + масштабирование + логарифмирование"""
+    def split_data(self, df: pd.DataFrame, target_col: str, log_transform: bool = False):
+        # Удаляем целевой столбец и оставляем только числовые признаки
         X = df.drop(columns=[target_col])
+        X = X.select_dtypes(include=[np.number])  # ← КЛЮЧЕВАЯ СТРОКА
         y = df[target_col]
 
         X_scaled = self.scaler.fit_transform(X)
@@ -64,6 +60,7 @@ class DataPipeline:
             y = y.apply(lambda v: np.log1p(v) if v > 0 else np.nan).dropna()
             X_scaled = X_scaled[:len(y)]  # подгоняем по размеру
 
+        from sklearn.model_selection import train_test_split
         X_train, X_test, y_train, y_test = train_test_split(
             X_scaled, y, test_size=DEFAULT_TEST_SIZE, random_state=RANDOM_STATE
         )
