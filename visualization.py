@@ -9,12 +9,13 @@ from config import PLOTS_DIR
 from utils.decorators import timeit, handle_errors
 import plotly.express as px
 
-
 """
 Модуль визуализации: scatter, feature importance, корреляции.
 
 Используются matplotlib, seaborn и plotly.
 """
+
+
 class Visualizer:
 
     def __init__(self):

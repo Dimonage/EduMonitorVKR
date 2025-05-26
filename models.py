@@ -1,4 +1,3 @@
-
 import streamlit as st
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
@@ -14,7 +13,6 @@ from utils.decorators import timeit, handle_errors
 import plotly.express as px
 import pandas as pd
 
-
 """
 ModelManager — обучение, сравнение и сохранение моделей.
 
@@ -22,6 +20,8 @@ ModelManager — обучение, сравнение и сохранение м
 - Random Forest
 - Linear Regression
 """
+
+
 class ModelManager:
     def __init__(self):
         self.pipeline = DataPipeline()
