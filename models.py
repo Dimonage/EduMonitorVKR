@@ -33,8 +33,8 @@ class ModelManager:
 
         X_train, X_test, y_train, y_test, scaler, features = result
         model = self.train_model(X_train, y_train, algorithm)
-        rmse, mae = self.evaluate_model(
-            model, X_test, y_test, target_col, features, log_transform
+        rmse, mae, y_test, y_pred = self.evaluate_model(
+            model, X_test, y_test, log_transform
         )
 
         model_key = f"{model_name}_{algorithm.lower().replace(' ', '_')}"
@@ -47,8 +47,8 @@ class ModelManager:
             "mae": mae,
             "algorithm": algorithm,
             "key": model_key,
-            "y_true": y_test,
-            "y_pred": model.predict(X_test)
+            "y_test": y_test,
+            "y_pred": y_pred,
         }
 
     @timeit
@@ -77,7 +77,7 @@ class ModelManager:
 
     @timeit
     @handle_errors
-    def evaluate_model(self, model, X_test, y_test, name, features, log_transform):
+    def evaluate_model(self, model, X_test, y_test, log_transform):
         y_pred = model.predict(X_test)
         if log_transform:
             y_pred = np.expm1(y_pred)
@@ -90,7 +90,7 @@ class ModelManager:
         mae = mean_absolute_error(y_test, y_pred)
 
         st.info(f"📉 RMSE: {rmse:.2f} | MAE: {mae:.2f}")
-        return rmse, mae
+        return rmse, mae, y_test, y_pred
 
     def train_regression_ui(self, df, target_col, model_key, log_transform, title):
         st.subheader(title)
@@ -115,7 +115,7 @@ class ModelManager:
                 st.markdown("### 📊 Сравнение моделей")
                 for r in scores:
                     st.markdown(f"**{r['algorithm']}**: RMSE = `{r['rmse']:.2f}`, MAE = `{r['mae']:.2f}`")
-                    self.visualizer.plot_prediction_scatter(y_true=r["y_true"], y_pred=r["y_pred"], label=r["key"])
+                    self.visualizer.plot_prediction_scatter(y_true=r["y_test"], y_pred=r["y_pred"], label=r["key"])
                     self.visualizer.plot_feature_importance(r["model"], st.session_state[f"feature_names_{r['key']}"])
 
     def save_model(self, key: str):

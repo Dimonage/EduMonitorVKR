@@ -53,26 +53,27 @@ class DataPipeline:
     @handle_errors
     @timeit
     def split_data(self, df: pd.DataFrame, target_col: str, log_transform: bool = False):
-        df = df.select_dtypes(include=[np.number])
-        if target_col not in df.columns:
-            st.error(f"Целевая переменная {target_col} отсутствует среди числовых столбцов.")
-            return None
-
         X = df.drop(columns=[target_col])
         y = df[target_col]
 
-        if X.empty or y.empty:
-            st.error("Недостаточно данных после фильтрации.")
-            return None
+        # Убираем все нечисловые признаки
+        X = X.select_dtypes(include=["number"])
+
+        if log_transform:
+            y_log = y.apply(lambda v: np.log1p(v) if v > 0 else np.nan)
+            valid_idx = y_log.dropna().index
+
+            y = y_log.loc[valid_idx]
+            X = X.loc[valid_idx]
 
         X_scaled = self.scaler.fit_transform(X)
-        if log_transform:
-            y = y.apply(lambda v: np.log1p(v) if v > 0 else np.nan).dropna()
-            X_scaled = X_scaled[:len(y)]
 
         X_train, X_test, y_train, y_test = train_test_split(
-            X_scaled, y, test_size=DEFAULT_TEST_SIZE, random_state=RANDOM_STATE
+            X_scaled, y,
+            test_size=DEFAULT_TEST_SIZE,
+            random_state=RANDOM_STATE
         )
+
         features = X.columns.tolist()
         return X_train, X_test, y_train, y_test, self.scaler, features
 
