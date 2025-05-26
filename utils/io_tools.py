@@ -5,6 +5,10 @@ import pandas as pd
 import joblib
 import os
 
+"""
+Загрузка и сохранение моделей, датафреймов и кэшей.
+"""
+
 
 @st.cache_data
 def save_dataframe(df: pd.DataFrame, filename: str) -> bool:

@@ -5,6 +5,10 @@ from docx import Document
 from docx.shared import Inches
 import os
 
+"""
+Генерация отчёта .docx с визуализациями и комментариями.
+"""
+
 
 def export_to_word(output_file="edu_monitor_report.docx", standard_text=None) -> bool:
     """Создаёт и сохраняет отчёт в формате Word"""

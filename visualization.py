@@ -10,6 +10,11 @@ from utils.decorators import timeit, handle_errors
 import plotly.express as px
 
 
+"""
+Модуль визуализации: scatter, feature importance, корреляции.
+
+Используются matplotlib, seaborn и plotly.
+"""
 class Visualizer:
 
     def __init__(self):
@@ -18,6 +23,9 @@ class Visualizer:
     @handle_errors
     @timeit
     def plot_prediction_scatter(self, y_true, y_pred, label: str):
+        """
+             Строит scatter plot: фактические vs предсказанные значения.
+             """
         if y_true is None or y_pred is None:
             st.warning("Данные для scatter plot отсутствуют.")
             return
@@ -34,6 +42,9 @@ class Visualizer:
     @handle_errors
     @timeit
     def plot_feature_importance(self, model, feature_names: list[str]):
+        """
+               Отображает топ-10 признаков по важности модели.
+               """
         if not hasattr(model, "feature_importances_"):
             st.info("Модель не поддерживает важность признаков.")
             return
@@ -54,6 +65,9 @@ class Visualizer:
     @handle_errors
     @timeit
     def plot_correlation_heatmap(self, df: pd.DataFrame):
+        """
+             Строит интерактивную или статическую корреляционную тепловую карту.
+             """
         numeric_df = df.select_dtypes(include=["number"])
         corr = numeric_df.corr()
 

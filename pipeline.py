@@ -16,6 +16,9 @@ from utils.decorators import timeit, handle_errors
 def load_excel_file(uploaded_file):
     return pd.read_excel(uploaded_file)
 
+"""
+Модуль DataPipeline — для предобработки, фильтрации и кластеризации данных.
+"""
 
 class DataPipeline:
     def __init__(self):
@@ -25,6 +28,12 @@ class DataPipeline:
     @handle_errors
     @timeit
     def handle_data_upload(self) -> pd.DataFrame | None:
+        """
+                Загружает и очищает данные из .xlsx файла, сохраняет в session_state.
+
+                Returns:
+                    pd.DataFrame | None: Очищенный датафрейм или None при ошибке.
+                """
         uploaded_file = st.file_uploader("Загрузите файл (.xlsx)", type=["xlsx"], key="file_uploader")
         if uploaded_file:
             df = load_excel_file(uploaded_file)
@@ -43,6 +52,16 @@ class DataPipeline:
     @handle_errors
     @timeit
     def preprocess(self, df: pd.DataFrame, target_col: str | None = None) -> pd.DataFrame:
+        """
+                Предобрабатывает данные: удаляет пустые строки, дубликаты и пропуски.
+
+                Args:
+                    df (pd.DataFrame): Исходный DataFrame.
+                    target_col (str, optional): Целевая переменная для фильтрации.
+
+                Returns:
+                    pd.DataFrame: Очищенные данные.
+                """
         df = df.dropna(how="all", axis=1).dropna(how="all", axis=0)
         df = df.drop_duplicates()
         if target_col and target_col in df.columns:

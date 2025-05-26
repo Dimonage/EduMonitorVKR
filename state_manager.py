@@ -2,10 +2,17 @@
 
 import streamlit as st
 
+"""
+Модуль инициализации Streamlit session_state с ключами по умолчанию.
+"""
+
 
 class SessionStateManager:
     @staticmethod
     def initialize():
+        """
+              Устанавливает флаги session_state для загрузки, моделей и фильтрации.
+              """
         defaults = {
             # 🔹 Состояние загрузки и фильтрации
             "data_loaded": False,

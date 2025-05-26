@@ -4,6 +4,10 @@ import streamlit as st
 import os
 from config import PLOTS_DIR
 
+"""
+Анализ признаков, очистка графиков, расчёт выбросов и статистик.
+"""
+
 
 def clear_saved_plots():
     """Удаляет все сохранённые графики и очищает session_state"""

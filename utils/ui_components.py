@@ -7,6 +7,10 @@ import plotly.express as px
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+"""
+Графические компоненты анализа и кластеризации данных (Streamlit UI).
+"""
+
 
 def render_data_exploration_ui(df: pd.DataFrame):
     if df is None or df.empty:

@@ -11,8 +11,17 @@ from pipeline import DataPipeline
 from visualization import Visualizer
 from utils import io_tools
 from utils.decorators import timeit, handle_errors
+import plotly.express as px
+import pandas as pd
 
 
+"""
+ModelManager — обучение, сравнение и сохранение моделей.
+
+Поддерживает:
+- Random Forest
+- Linear Regression
+"""
 class ModelManager:
     def __init__(self):
         self.pipeline = DataPipeline()
@@ -21,6 +30,12 @@ class ModelManager:
     @timeit
     @handle_errors
     def train_and_evaluate(self, df, target_col, model_name, log_transform, algorithm):
+        """
+               Обучает и оценивает выбранную модель, возвращает метрики и предсказания.
+
+               Returns:
+                   dict: Содержит модель, RMSE, MAE, y_test, y_pred, algorithm, key
+               """
         df_clean = self.pipeline.preprocess(df, target_col)
         if df_clean.empty:
             st.error("Обработанный датасет пуст.")
@@ -115,8 +130,34 @@ class ModelManager:
                 st.markdown("### 📊 Сравнение моделей")
                 for r in scores:
                     st.markdown(f"**{r['algorithm']}**: RMSE = `{r['rmse']:.2f}`, MAE = `{r['mae']:.2f}`")
-                    self.visualizer.plot_prediction_scatter(y_true=r["y_test"], y_pred=r["y_pred"], label=r["key"])
+                    self.visualizer.plot_prediction_scatter(r["y_test"], r["y_pred"], r["key"])
                     self.visualizer.plot_feature_importance(r["model"], st.session_state[f"feature_names_{r['key']}"])
+
+                # 📊 Итоговый bar plot по метрикам
+                df_metrics = pd.DataFrame(scores)
+                fig_rmse = px.bar(
+                    df_metrics,
+                    x="algorithm",
+                    y="rmse",
+                    title="RMSE по моделям",
+                    labels={"rmse": "RMSE", "algorithm": "Модель"},
+                    text_auto=".2f",
+                    height=400,
+                    color="algorithm"
+                )
+                st.plotly_chart(fig_rmse, use_container_width=True)
+
+                fig_mae = px.bar(
+                    df_metrics,
+                    x="algorithm",
+                    y="mae",
+                    title="MAE по моделям",
+                    labels={"mae": "MAE", "algorithm": "Модель"},
+                    text_auto=".2f",
+                    height=400,
+                    color="algorithm"
+                )
+                st.plotly_chart(fig_mae, use_container_width=True)
 
     def save_model(self, key: str):
         for algo in ["Random Forest", "Linear Regression"]:
